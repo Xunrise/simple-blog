@@ -43,6 +43,8 @@ export default function AdminPage() {
   })
   const [isVisible, setIsVisible] = useState(true)
   const [editedPosts, setEditedPosts] = useState<Record<string, { title: string; content: string }>>({})
+  const [deletingPosts, setDeletingPosts] = useState<string[]>([])
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Add beforeunload event listener
   useEffect(() => {
@@ -235,11 +237,20 @@ export default function AdminPage() {
       isDestructive: true,
       onConfirm: async () => {
         try {
+          setDialog(prev => ({ ...prev, isOpen: false }))
+          // Start animation after dialog closes
+          await new Promise(resolve => setTimeout(resolve, 100))
+          setDeletingPosts(prev => [...prev, slug])
+          setIsDeleting(true)
+
           const res = await fetch(`/api/posts/${slug}`, {
             method: 'DELETE'
           })
 
           if (!res.ok) throw new Error('Failed to delete post')
+          
+          // Wait for animation
+          await new Promise(resolve => setTimeout(resolve, 500))
 
           // Fetch updated posts
           const postsRes = await fetch('/api/posts')
@@ -249,10 +260,13 @@ export default function AdminPage() {
           if (selectedPost?.slug === slug) {
             setSelectedPost(null)
           }
+          setDeletingPosts(prev => prev.filter(s => s !== slug))
+          setIsDeleting(false)
         } catch (error) {
           console.error('Failed to delete post:', error)
+          setDeletingPosts(prev => prev.filter(s => s !== slug))
+          setIsDeleting(false)
         }
-        setDialog(prev => ({ ...prev, isOpen: false }))
       }
     })
   }
@@ -357,7 +371,11 @@ export default function AdminPage() {
         <div className="grid grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
           {/* Main content area - 8 columns */}
           <div className="col-span-8 h-full w-full">
-            <article className="w-full h-full bg-white dark:bg-zinc-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+            <article className={`w-full h-full bg-white dark:bg-zinc-900 rounded-xl shadow-md hover:shadow-lg will-change-transform will-change-opacity ${
+              isDeleting && selectedPost && deletingPosts.includes(selectedPost.slug) 
+                ? 'translate-y-4 scale-95 opacity-0' 
+                : 'translate-y-0 scale-100 opacity-100'
+            } transition-all duration-300 ease-out overflow-hidden`}>
               <div className={`w-full h-full transition-opacity duration-150 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'} overflow-hidden`}>
                 {selectedPost ? (
                   <form onSubmit={handleUpdatePost} className="h-full w-full overflow-hidden">
@@ -568,17 +586,14 @@ export default function AdminPage() {
                 {posts.map((post) => (
                   <div key={post.slug} className="group">
                     <div 
-                      className={`flex items-center justify-between rounded-lg hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 transition-all duration-200 ${
+                      className={`flex items-center justify-between rounded-lg hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 will-change-transform will-change-opacity ${
                         selectedPost?.slug === post.slug 
                           ? 'bg-gray-100/50 dark:bg-zinc-800/30' 
                           : editedPosts[post.slug] 
                             ? 'bg-blue-50/50 dark:bg-blue-900/10'
                             : ''
-                      }`}
+                      } ${deletingPosts.includes(post.slug) ? 'opacity-0 -translate-x-4 scale-95' : 'opacity-100 translate-x-0 scale-100'} transition-all duration-300 ease-out cursor-pointer`}
                       onClick={() => handlePostSelect(post)}
-                      role="button"
-                      tabIndex={0}
-                      style={{ cursor: 'pointer' }}
                     >
                       <div className="flex items-center py-2 px-2 flex-grow min-w-0">
                         {editedPosts[post.slug] && (
@@ -590,6 +605,7 @@ export default function AdminPage() {
                       </div>
                       <div className="flex gap-1 px-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleDeletePost(post.slug)
