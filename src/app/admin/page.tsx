@@ -366,8 +366,10 @@ export default function AdminPage() {
                         type="text"
                         value={selectedPost.title}
                         onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
-                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-0 focus:ring-0 dark:text-gray-100"
+                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
                         placeholder="Post Title"
+                        onFocus={(e) => e.target.placeholder = ''}
+                        onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
                       <div className="relative mb-4">
@@ -382,7 +384,7 @@ export default function AdminPage() {
                             }
                           }}
                           dateFormat="yyyy-MM-dd"
-                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-40"
+                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
                           showPopperArrow={false}
                           fixedHeight
                           showMonthDropdown
@@ -462,8 +464,10 @@ export default function AdminPage() {
                         type="text"
                         value={newPost.title}
                         onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-0 focus:ring-0 dark:text-gray-100"
+                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
                         placeholder="Post Title"
+                        onFocus={(e) => e.target.placeholder = ''}
+                        onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
                       <div className="relative mb-4">
@@ -478,7 +482,7 @@ export default function AdminPage() {
                             }
                           }}
                           dateFormat="yyyy-MM-dd"
-                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-40"
+                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
                           showPopperArrow={false}
                           fixedHeight
                           showMonthDropdown
