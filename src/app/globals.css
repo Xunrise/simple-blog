@@ -2,16 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme variables */
 :root {
   --foreground-rgb: 55, 65, 81;
   --background-rgb: 249, 250, 251;
+  --background-gradient-from: 249, 250, 251;
+  --background-gradient-to: 255, 255, 255;
+  --card-background: 255, 255, 255;
+  --card-border: 229, 231, 235;
+  --hover-bg: 243, 244, 246;
+  --prose-headings: 31, 41, 55;
+  --prose-body: 55, 65, 81;
+  --prose-links: 79, 70, 229;
+  --prose-links-hover: 99, 102, 241;
+  --sidebar-bg: 255, 255, 255, 0.8;
+  --sidebar-border: 243, 244, 246;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 229, 231, 235;
-    --background-rgb: 24, 24, 27;
-  }
+/* Dark theme variables */
+.dark {
+  --foreground-rgb: 229, 231, 235;
+  --background-rgb: 24, 24, 27;
+  --background-gradient-from: 24, 24, 27;
+  --background-gradient-to: 17, 24, 39;
+  --card-background: 39, 39, 42;
+  --card-border: 63, 63, 70;
+  --hover-bg: 55, 65, 81;
+  --prose-headings: 243, 244, 246;
+  --prose-body: 209, 213, 219;
+  --prose-links: 129, 140, 248;
+  --prose-links-hover: 165, 180, 252;
+  --sidebar-bg: 39, 39, 42, 0.8;
+  --sidebar-border: 63, 63, 70;
+}
+
+/* Apply transitions for smooth theme changes */
+*, 
+*::before, 
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 
 html {
@@ -28,13 +59,34 @@ article {
   scroll-margin-top: 2rem;
 }
 
+/* Apply background gradient to main backgrounds */
+.bg-gradient-to-b {
+  background: linear-gradient(to bottom, 
+    rgb(var(--background-gradient-from)), 
+    rgb(var(--background-gradient-to)));
+}
+
+/* Card and UI elements */
+.bg-white, .dark .dark\:bg-zinc-900 {
+  background-color: rgb(var(--card-background));
+}
+
+.border-gray-100, .dark .dark\:border-zinc-800 {
+  border-color: rgb(var(--card-border));
+}
+
+.hover\:bg-gray-100:hover, .dark .dark\:hover\:bg-zinc-800:hover {
+  background-color: rgba(var(--hover-bg), 0.5);
+}
+
+/* Prose styles */
 .prose {
   max-width: 65ch;
   color: inherit;
 }
 
 .prose a {
-  color: #4f46e5;
+  color: rgb(var(--prose-links));
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
@@ -42,39 +94,24 @@ article {
 }
 
 .prose a:hover {
-  color: #6366f1;
+  color: rgb(var(--prose-links-hover));
   text-decoration-thickness: 2px;
 }
 
-.dark .prose a {
-  color: #818cf8;
-}
-
-.dark .prose a:hover {
-  color: #a5b4fc;
-}
-
 .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-  color: rgb(31, 41, 55);
+  color: rgb(var(--prose-headings));
   margin-top: 2em;
   margin-bottom: 1em;
   font-weight: 600;
 }
 
-.dark .prose h1, 
-.dark .prose h2, 
-.dark .prose h3, 
-.dark .prose h4, 
-.dark .prose h5, 
-.dark .prose h6 {
-  color: rgb(243, 244, 246);
-}
-
 .prose p {
   margin-bottom: 1.5em;
   line-height: 1.75;
+  color: rgb(var(--prose-body));
 }
 
+/* Content editable styling */
 [contenteditable]:empty:before {
   content: attr(data-placeholder);
   color: #9ca3af;
@@ -87,11 +124,15 @@ article {
 
 /* DatePicker Custom Styles */
 .react-datepicker {
-  @apply p-2 font-sans bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg;
+  @apply p-2 font-sans rounded-lg shadow-lg;
+  background-color: rgb(var(--card-background));
+  border-color: rgb(var(--card-border));
 }
 
 .react-datepicker__header {
-  @apply bg-gray-50 dark:bg-zinc-800 border-0 p-0;
+  border: 0;
+  padding: 0;
+  background-color: rgb(var(--card-background));
 }
 
 .react-datepicker__triangle {
@@ -99,19 +140,22 @@ article {
 }
 
 .react-datepicker__month-container {
-  @apply bg-gray-50 dark:bg-zinc-800;
+  background-color: rgb(var(--card-background));
 }
 
 .react-datepicker__current-month {
-  @apply text-gray-900 dark:text-gray-100 font-semibold mb-4;
+  color: rgb(var(--foreground-rgb));
+  @apply font-semibold mb-4;
 }
 
 .react-datepicker__day-names {
-  @apply border-b border-gray-200 dark:border-zinc-700 pb-2 mb-2;
+  border-bottom: 1px solid rgb(var(--card-border));
+  @apply pb-2 mb-2;
 }
 
 .react-datepicker__day-name {
-  @apply text-gray-500 dark:text-gray-400 text-xs font-medium w-8 h-8 leading-8 m-0;
+  color: rgba(var(--foreground-rgb), 0.7);
+  @apply text-xs font-medium w-8 h-8 leading-8 m-0;
 }
 
 .react-datepicker__month {
@@ -119,7 +163,12 @@ article {
 }
 
 .react-datepicker__day {
-  @apply text-gray-900 dark:text-gray-100 w-8 h-8 leading-8 m-0 rounded-full hover:bg-gray-200/70 dark:hover:bg-zinc-700/70 transition-colors;
+  color: rgb(var(--foreground-rgb));
+  @apply w-8 h-8 leading-8 m-0 rounded-full transition-colors;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(var(--hover-bg), 0.7);
 }
 
 .react-datepicker__day--selected {
@@ -127,15 +176,30 @@ article {
 }
 
 .react-datepicker__day--keyboard-selected {
-  @apply bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-500/30;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: rgb(var(--prose-links));
+}
+
+.dark .react-datepicker__day--keyboard-selected {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: rgb(var(--prose-links));
+}
+
+.react-datepicker__day--keyboard-selected:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.dark .react-datepicker__day--keyboard-selected:hover {
+  background-color: rgba(59, 130, 246, 0.3);
 }
 
 .react-datepicker__day--today {
-  @apply font-semibold text-blue-500 dark:text-blue-400;
+  color: rgb(var(--prose-links));
+  @apply font-semibold;
 }
 
 .react-datepicker__day--outside-month {
-  @apply text-gray-400 dark:text-gray-600;
+  color: rgba(var(--foreground-rgb), 0.4);
 }
 
 .react-datepicker__navigation {
@@ -143,23 +207,28 @@ article {
 }
 
 .react-datepicker__navigation-icon::before {
-  @apply border-gray-400 dark:border-gray-500;
+  border-color: rgba(var(--foreground-rgb), 0.6);
 }
 
 /* Month and Year Dropdowns */
 .react-datepicker__month-select,
 .react-datepicker__year-select {
-  @apply bg-gray-100 dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 rounded px-2 py-1 text-sm text-gray-600 dark:text-gray-300 cursor-pointer;
+  background-color: rgba(var(--hover-bg), 0.5);
+  border: 1px solid rgb(var(--card-border));
+  @apply rounded px-2 py-1 text-sm cursor-pointer;
+  color: rgb(var(--foreground-rgb));
 }
 
 .react-datepicker__month-select:focus,
 .react-datepicker__year-select:focus {
-  @apply outline-none border-blue-500 dark:border-blue-400;
+  @apply outline-none;
+  border-color: rgb(var(--prose-links));
 }
 
 .react-datepicker__month-select option,
 .react-datepicker__year-select option {
-  @apply bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-gray-100;
+  background-color: rgb(var(--card-background));
+  color: rgb(var(--foreground-rgb));
 }
 
 /* Input field styles */
@@ -168,32 +237,19 @@ article {
   font-size: 0.875rem;
   padding: 0.5rem 0.75rem 0.5rem 2.25rem;
   border-radius: 0.5rem;
-  border: 1px solid rgb(229, 231, 235);
+  border: 1px solid rgb(var(--card-border));
   background-color: transparent;
-  color: rgb(55, 65, 81);
+  color: rgb(var(--foreground-rgb));
   width: 10rem;
   transition: all 0.2s;
 }
 
-.dark .react-datepicker__input-container input {
-  border-color: rgb(63, 63, 70);
-  color: rgb(209, 213, 219);
-}
-
 .react-datepicker__input-container input:hover {
-  border-color: rgb(59, 130, 246);
-}
-
-.dark .react-datepicker__input-container input:hover {
-  border-color: rgb(96, 165, 250);
+  border-color: rgb(var(--prose-links));
 }
 
 .react-datepicker__input-container input:focus {
   outline: none;
-  border-color: rgb(59, 130, 246);
+  border-color: rgb(var(--prose-links));
   ring: 0;
-}
-
-.dark .react-datepicker__input-container input:focus {
-  border-color: rgb(96, 165, 250);
 }

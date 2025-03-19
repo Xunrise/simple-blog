@@ -1,6 +1,8 @@
 import { getAllPosts } from '@/lib/posts'
 import type { Post } from '../lib/types'
 import { Sidebar } from '@/components/Sidebar'
+import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 
 export default async function Home() {
   const posts = await getAllPosts()
@@ -10,7 +12,7 @@ export default async function Home() {
       <div className="max-w-[1800px] mx-auto px-4 py-8">
         <div className="grid grid-cols-12 gap-8">
           {/* Main content area - 4 columns, centered */}
-          <div className="col-span-4 col-start-5">
+          <div className="col-span-6 col-start-4">
             <div className="space-y-16">
               {posts.map((post) => (
                 <article 
@@ -21,7 +23,9 @@ export default async function Home() {
                   <div className="prose lg:prose-xl dark:prose-invert">
                     <h2 className="mb-4 text-2xl font-bold text-gray-800 dark:text-gray-100">{post.title}</h2>
                     <div className="text-gray-500 dark:text-gray-400 mb-4 text-sm">{post.date}</div>
-                    <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                    <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                      {post.content || ' '}
+                    </ReactMarkdown>
                   </div>
                 </article>
               ))}
@@ -29,7 +33,7 @@ export default async function Home() {
           </div>
 
           {/* Sidebar - 2 columns */}
-          <aside className="col-span-2 col-start-9">
+          <aside className="col-span-2 col-start-11">
             <div className="sticky top-8 space-y-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-gray-100 dark:border-zinc-800">
               <nav className="space-y-1">
                 {posts.map((post) => (
