@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css"
 import type { Post } from '@/lib/types'
 import { MarkdownEditor } from '@/components/MarkdownEditor'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useSession, signOut } from 'next-auth/react'
 
 interface MarkdownButton {
   label: string
@@ -33,6 +34,7 @@ const markdownButtons: MarkdownButton[] = [
 
 export default function AdminPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
@@ -346,6 +348,30 @@ export default function AdminPage() {
     </div>
   )
 
+  // Add auth-related UI elements
+  const renderAuthStatus = () => {
+    return (
+      <div className="flex items-center gap-2">
+        {session?.user?.image && (
+          <img 
+            src={session.user.image} 
+            alt={session.user.name || "User"} 
+            className="w-8 h-8 rounded-full" 
+          />
+        )}
+        <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
+          {session?.user?.name || session?.user?.email}
+        </span>
+        <button
+          onClick={() => signOut({ callbackUrl: '/' })}
+          className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+        >
+          Sign Out
+        </button>
+      </div>
+    )
+  }
+
   if (isLoading) return <div>Loading...</div>
 
   return (
@@ -363,9 +389,12 @@ export default function AdminPage() {
       <div className="max-w-[1800px] mx-auto px-4 py-8 h-screen">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Blog Admin</h1>
-          <Link href="/" className="text-blue-500 hover:text-blue-600">
-            View Blog
-          </Link>
+          <div className="flex items-center gap-4">
+            {renderAuthStatus()}
+            <Link href="/" className="text-blue-500 hover:text-blue-600">
+              View Blog
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
