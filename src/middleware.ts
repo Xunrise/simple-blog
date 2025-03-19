@@ -4,8 +4,8 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if the path starts with /admin
-  if (pathname.startsWith("/admin")) {
+  // Check if the path starts with /admin or /api
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api")) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
@@ -23,5 +23,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/posts/:path*"],
 }; 
