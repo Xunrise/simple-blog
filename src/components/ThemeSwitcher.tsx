@@ -17,7 +17,7 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-white dark:bg-zinc-900 rounded-lg shadow-md p-2 border border-gray-200 dark:border-zinc-800 transition-all">
+    <div className="lg:fixed top-4 left-4 z-50 bg-white dark:bg-zinc-900 rounded-lg shadow-md p-2 border border-gray-200 dark:border-zinc-800 transition-all">
       <div className="flex items-center space-x-1">
         {/* Light theme button */}
         <button
