@@ -90,34 +90,6 @@ export function MobileSidebar({ posts }: MobileSidebarProps) {
           </svg>
         </button>
       </div>
-      
-      {/* Theme toggle button */}
-      <div className="fixed top-4 right-16 z-40 lg:hidden">
-        <button 
-          className="theme-button p-2 rounded-full bg-white dark:bg-zinc-800 shadow-md"
-          onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-          aria-label="Toggle theme"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
-      </div>
-      
-      {/* Theme switcher menu for mobile */}
-      <div 
-        ref={themeMenuRef}
-        className={`fixed top-14 right-4 z-40 bg-white dark:bg-zinc-800 shadow-lg rounded-lg p-2 transition-transform duration-300 transform lg:hidden ${isThemeMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}
-      >
-        <div className="p-2">
-          <p className="font-medium text-gray-800 dark:text-gray-200 mb-2">Theme</p>
-          <div className="space-y-2">
-            <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200">Light</button>
-            <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200">Dark</button>
-            <button className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200">System</button>
-          </div>
-        </div>
-      </div>
 
       {/* Sidebar - hidden on mobile, shown as overlay when menu is opened */}
       <aside 
