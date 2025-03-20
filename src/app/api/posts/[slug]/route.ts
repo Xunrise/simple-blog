@@ -6,11 +6,12 @@ const postsDirectory = path.join(process.cwd(), 'posts')
 
 export async function PUT(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { title, content, date } = await request.json()
-    const filePath = path.join(postsDirectory, `${params.slug}.md`)
+    const resolvedParams = await params
+    const filePath = path.join(postsDirectory, `${resolvedParams.slug}.md`)
 
     // Create markdown content
     const markdown = `---
@@ -32,10 +33,11 @@ ${content}`
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const filePath = path.join(postsDirectory, `${params.slug}.md`)
+    const resolvedParams = await params
+    const filePath = path.join(postsDirectory, `${resolvedParams.slug}.md`)
     fs.unlinkSync(filePath)
 
     return NextResponse.json({ success: true })
