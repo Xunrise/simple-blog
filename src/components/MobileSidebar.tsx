@@ -15,7 +15,7 @@ interface MobileSidebarProps {
 
 export function MobileSidebar({ posts }: MobileSidebarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false)
+  const [setIsThemeMenuOpen] = useState(false)
   const menuRef = useRef<HTMLElement>(null)
   const themeMenuRef = useRef<HTMLDivElement>(null)
   
