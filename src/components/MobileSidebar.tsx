@@ -15,7 +15,6 @@ interface MobileSidebarProps {
 
 export function MobileSidebar({ posts }: MobileSidebarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [setIsThemeMenuOpen] = useState(false)
   const menuRef = useRef<HTMLElement>(null)
   const themeMenuRef = useRef<HTMLDivElement>(null)
   
@@ -29,10 +28,6 @@ export function MobileSidebar({ posts }: MobileSidebarProps) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && 
           !(event.target as Element).closest('.menu-button')) {
         setIsMenuOpen(false)
-      }
-      if (themeMenuRef.current && !themeMenuRef.current.contains(event.target as Node) && 
-          !(event.target as Element).closest('.theme-button')) {
-        setIsThemeMenuOpen(false)
       }
     }
     
