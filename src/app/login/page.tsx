@@ -2,15 +2,12 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
-export default function LoginPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+function LoginForm() {
   const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Get error message from the URL query parameters
   useEffect(() => {
     const error = searchParams.get("error");
     if (error === "AccessDenied") {
@@ -20,7 +17,48 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  // Redirect to admin if already authenticated
+  return (
+    <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-md border border-gray-100 dark:border-zinc-800">
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
+        Blog Admin Login
+      </h1>
+      
+      <div className="text-center mb-6">
+        <p className="text-gray-600 dark:text-gray-400">
+          Sign in to access the admin dashboard
+        </p>
+      </div>
+
+      {errorMessage && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+          {errorMessage}
+        </div>
+      )}
+      
+      <button
+        onClick={() => signIn("google", { callbackUrl: "/admin" })}
+        className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-gray-100 py-3 px-4 rounded-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-200"
+      >
+        <GoogleIcon />
+        <span>Sign in with Google</span>
+      </button>
+      
+      <div className="mt-6 text-center">
+        <a 
+          href="/" 
+          className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+        >
+          Return to Blog
+        </a>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/admin");
@@ -29,41 +67,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative bg-gradient-to-b from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950 flex items-center justify-center">
-      <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-900 rounded-xl shadow-md border border-gray-100 dark:border-zinc-800">
-        <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
-          Blog Admin Login
-        </h1>
-        
-        <div className="text-center mb-6">
-          <p className="text-gray-600 dark:text-gray-400">
-            Sign in to access the admin dashboard
-          </p>
-        </div>
-
-        {/* Error message display */}
-        {errorMessage && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
-            {errorMessage}
-          </div>
-        )}
-        
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/admin" })}
-          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-gray-100 py-3 px-4 rounded-lg border border-gray-200 dark:border-zinc-700 transition-colors duration-200"
-        >
-          <GoogleIcon />
-          <span>Sign in with Google</span>
-        </button>
-        
-        <div className="mt-6 text-center">
-          <a 
-            href="/" 
-            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
-          >
-            Return to Blog
-          </a>
-        </div>
-      </div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
