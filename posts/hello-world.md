@@ -1,6 +1,7 @@
 ---
 title: 'Hello World'
 date: '2024-02-05'
+category: 'Farming'
 ---
 
 # Welcome to My Blog

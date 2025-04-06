@@ -3,4 +3,6 @@ export type Post = {
   title: string
   date: string
   content: string
+  category: string
+  excerpt: string
 } 

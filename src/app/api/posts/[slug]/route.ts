@@ -4,6 +4,7 @@ import path from 'path'
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
