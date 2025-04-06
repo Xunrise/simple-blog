@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { MobileSidebar } from '@/components/MobileSidebar'
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const posts = await getAllPosts()
   const {slug} = await params
   const post = posts.find(p => p.slug === slug)
