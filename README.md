@@ -32,6 +32,7 @@ A simple markdown blog with an admin panel protected by Google authentication.
    NEXTAUTH_URL=http://localhost:3000
    NEXTAUTH_SECRET=your-secure-random-string
    
+
    # Google OAuth
    GOOGLE_CLIENT_ID=your-google-client-id
    GOOGLE_CLIENT_SECRET=your-google-client-secret
