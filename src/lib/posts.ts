@@ -5,6 +5,7 @@ import matter from 'gray-matter'
 import { MDXRemote } from 'next-mdx-remote-client/rsc'
 import {list} from "@vercel/blob";
 import { blob } from 'stream/consumers'
+import {cache} from 'react'
 
 function generateExcerpt(content: string, maxLength = 200) {
   const plainText = content.replace(/[#*`_]/g, '')
@@ -15,7 +16,7 @@ function generateExcerpt(content: string, maxLength = 200) {
 
 const postsDirectory = path.join(process.cwd(), 'src/posts')
 
-export async function getAllPosts(): Promise<Post[]> {
+export const getAllPosts = cache(async function getAllPosts(): Promise<Post[]> {
   // Get local posts
   const filenames = fs.readdirSync(postsDirectory)
   const localPosts = filenames
@@ -61,4 +62,4 @@ export async function getAllPosts(): Promise<Post[]> {
   // Combine and sort all posts
   const allPosts = [...localPosts, ...remotePosts]
   return allPosts.sort((a, b) => (a.date < b.date ? 1 : -1))
-}
+});
