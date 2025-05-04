@@ -3,11 +3,11 @@ import { put, del } from '@vercel/blob'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { slug: string } }
+  context: { params: { slug: string } }
 ) {
   try {
     const { title, content, date, category } = await request.json()
-    const { slug } = params
+    const { slug } = context.params
 
     // Create markdown content with frontmatter
     const markdown = `---
@@ -34,10 +34,10 @@ ${content}`
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { slug: string } }
+  context: { params: { slug: string } }
 ) {
   try {
-    const { slug } = params
+    const { slug } = context.params
     await del(`posts/${slug}.mdx`)
 
     return NextResponse.json({ success: true })
