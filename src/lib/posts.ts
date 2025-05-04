@@ -1,9 +1,7 @@
-import fs from 'fs'
 import path from 'path'
-import matter from 'gray-matter'
 import { Post } from './types'
-
-const postsDirectory = path.join(process.cwd(), 'posts')
+import fs from 'fs'
+import matter from 'gray-matter'
 
 function generateExcerpt(content: string, maxLength: number = 150): string {
   // Remove any markdown formatting
@@ -21,23 +19,27 @@ function generateExcerpt(content: string, maxLength: number = 150): string {
   return truncated.slice(0, lastSpace) + '...'
 }
 
+const postsDirectory = path.join(process.cwd(), 'src/posts')
+
 export async function getAllPosts(): Promise<Post[]> {
-  const fileNames = fs.readdirSync(postsDirectory)
-  const posts = fileNames.map((fileName) => {
-    const slug = fileName.replace(/\.md$/, '')
-    const fullPath = path.join(postsDirectory, fileName)
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
-    const { data, content } = matter(fileContents)
-    
-    return {
-      slug,
-      content,
-      title: data.title as string,
-      date: data.date as string,
-      category: (data.category as string) || 'Uncategorized',
-      excerpt: generateExcerpt(content)
-    }
-  })
+  const filenames = fs.readdirSync(postsDirectory)
+  const posts = filenames
+    .filter((filename) => filename.endsWith('.mdx') || filename.endsWith('.md'))
+    .map((filename) => {
+      const filePath = path.join(postsDirectory, filename)
+      const fileContents = fs.readFileSync(filePath, 'utf8')
+      const { data: metadata, content } = matter(fileContents)
+      const slug = filename.replace(/\.mdx$/, '')
+
+      return {
+        slug,
+        content,
+        title: metadata.title as string,
+        date: metadata.date as string,
+        category: (metadata.category as string) || 'Uncategorized',
+        excerpt: generateExcerpt(content)
+      }
+    })
 
   return posts.sort((a, b) => (a.date < b.date ? 1 : -1))
 }

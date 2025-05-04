@@ -6,9 +6,8 @@ import { MobileSidebar } from '@/components/MobileSidebar'
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const posts = await getAllPosts()
   const {slug} = await params
-  const post = posts.find(p => p.slug === slug)
-
-  if (!post) {
+  const {default: Post} = await import(`@/posts/${slug}.mdx`)
+  if (!Post) {
     notFound()
   }
 
@@ -22,18 +21,18 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <article className="max-w-3xl mx-auto">
           <header className="mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {post.title}
+              {Post.title}
             </h1>
             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <time dateTime={post.date}>{post.date}</time>
+              <time dateTime={Post.date}>{Post.date}</time>
               <span className="px-2 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300">
-                {post.category}
+                {Post.category}
               </span>
             </div>
           </header>
 
           <div className="prose dark:prose-invert prose-lg max-w-none">
-            {post.content}
+            <Post />
           </div>
         </article>
       </div>
