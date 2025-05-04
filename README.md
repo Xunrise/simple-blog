@@ -24,6 +24,8 @@ A simple markdown blog with an admin panel protected by Google authentication.
    npm install
    ```
 
+
+
 ### Configuration
 
 1. Create a `.env.local` file in the root directory with the following variables:
