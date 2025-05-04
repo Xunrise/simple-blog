@@ -38,7 +38,7 @@ export const getAllPosts = cache(async function getAllPosts(): Promise<Post[]> {
     })
 
   // Get remote posts from Vercel Blob storage
-  const response = await list()
+  const response = await list({mode: 'folded', prefix: 'posts/'})
   const remotePosts = await Promise.all(
     response.blobs
       .filter(blob => blob.pathname.endsWith('.mdx') || blob.pathname.endsWith('.md'))
@@ -46,7 +46,7 @@ export const getAllPosts = cache(async function getAllPosts(): Promise<Post[]> {
         const response = await fetch(blob.url)
         const fileContents = await response.text()
         const { data: metadata, content } = matter(fileContents)
-        const slug = blob.pathname.replace(/\.mdx$/, '')
+        const slug = blob.pathname.replace(/\.mdx$/, '').replace('posts/', '')
 
         return {
           slug,
