@@ -10,6 +10,7 @@ import type { Post } from '@/lib/types'
 import { MarkdownEditor } from '@/components/MarkdownEditor'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useSession, signOut } from 'next-auth/react'
+import { Combobox } from '@headlessui/react'
 
 interface MarkdownButton {
   label: string
@@ -37,16 +38,29 @@ export default function AdminPage() {
   const { data: session } = useSession()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [newPost, setNewPost] = useState({
     title: '',
     content: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    category: 'Uncategorized'
   })
+  const [categoryQuery, setCategoryQuery] = useState('')
   const [isVisible, setIsVisible] = useState(true)
   const [editedPosts, setEditedPosts] = useState<Record<string, { title: string; content: string }>>({})
   const [deletingPosts, setDeletingPosts] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Get unique categories from posts
+  const categories = ['Uncategorized', ...new Set(posts.map(post => post.category))]
+
+  // Filter categories based on query
+  const filteredCategories = categoryQuery === ''
+    ? categories
+    : categories.filter((category) =>
+        category.toLowerCase().includes(categoryQuery.toLowerCase())
+      )
 
   // Add beforeunload event listener
   useEffect(() => {
@@ -118,7 +132,10 @@ export default function AdminPage() {
           content: editedVersion.content
         })
       } else {
-        setSelectedPost(post)
+        setSelectedPost({
+          ...post,
+          content: post.content
+        })
       }
     } else {
       setSelectedPost(null)
@@ -168,6 +185,7 @@ export default function AdminPage() {
       confirmLabel: 'Save Changes',
       onConfirm: async () => {
         try {
+          setIsProcessing(true)
           const res = await fetch(`/api/posts/${selectedPost.slug}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -187,6 +205,8 @@ export default function AdminPage() {
           setEditedPosts(remainingEdits)
         } catch (error) {
           console.error('Failed to update post:', error)
+        } finally {
+          setIsProcessing(false)
         }
         setDialog(prev => ({ ...prev, isOpen: false }))
       }
@@ -205,6 +225,7 @@ export default function AdminPage() {
         const slug = newPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
         try {
+          setIsProcessing(true)
           const res = await fetch('/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -221,9 +242,16 @@ export default function AdminPage() {
           if (!postsRes.ok) throw new Error('Failed to fetch updated posts')
           const data = await postsRes.json()
           setPosts(Array.isArray(data) ? data : [])
-          setNewPost({ title: '', content: '', date: new Date().toISOString().split('T')[0] })
+          setNewPost({ 
+            title: '', 
+            content: '', 
+            date: new Date().toISOString().split('T')[0],
+            category: 'Uncategorized'
+          })
         } catch (error) {
           console.error('Failed to create post:', error)
+        } finally {
+          setIsProcessing(false)
         }
         setDialog(prev => ({ ...prev, isOpen: false }))
       }
@@ -372,7 +400,72 @@ export default function AdminPage() {
     )
   }
 
-  if (isLoading) return <div>Loading...</div>
+  const renderCategoryCombobox = (value: string, onChange: (value: string) => void) => (
+    <Combobox value={value} onChange={onChange}>
+      <div className="relative">
+        <div className="relative">
+          <Combobox.Input
+            className="w-full text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 pl-3 pr-10 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCategoryQuery(event.target.value)}
+            displayValue={(category: string) => category}
+            placeholder="Category"
+          />
+          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+            <svg
+              className="h-5 w-5 text-gray-400"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M7 7l3-3 3 3m0 6l-3 3-3-3"
+              />
+            </svg>
+          </Combobox.Button>
+        </div>
+        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-zinc-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          {filteredCategories.length === 0 ? (
+            <div className="relative cursor-default select-none py-2 px-4 text-gray-700 dark:text-gray-300">
+              No categories found.
+            </div>
+          ) : (
+            filteredCategories.map((category) => (
+              <Combobox.Option
+                key={category}
+                className={({ active }: { active: boolean }) =>
+                  `relative cursor-default select-none py-2 px-4 ${
+                    active ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'
+                  }`
+                }
+                value={category}
+              >
+                {({ selected, active }: { selected: boolean; active: boolean }) => (
+                  <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                    {category}
+                  </span>
+                )}
+              </Combobox.Option>
+            ))
+          )}
+        </Combobox.Options>
+      </div>
+    </Combobox>
+  )
+
+  if (isLoading) return (
+    <div className="min-h-screen relative bg-gradient-to-b from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-8 flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+          <p className="text-gray-700 dark:text-gray-300 font-medium">Loading posts...</p>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen relative bg-gradient-to-b from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
@@ -385,6 +478,17 @@ export default function AdminPage() {
         onCancel={() => setDialog(prev => ({ ...prev, isOpen: false }))}
         isDestructive={dialog.isDestructive}
       />
+      {isProcessing && (
+        <>
+          <div className="fixed inset-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm z-[60]" />
+          <div className="fixed inset-0 flex items-center justify-center z-[60]">
+            <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-xl p-8 flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+              <p className="text-gray-700 dark:text-gray-300 font-medium">Processing...</p>
+            </div>
+          </div>
+        </>
+      )}
       
       <div className="max-w-[1800px] mx-auto px-4 py-8 h-screen">
         <div className="flex justify-between items-center mb-8">
@@ -419,32 +523,38 @@ export default function AdminPage() {
                         onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
-                      <div className="relative mb-4">
-                        <DatePicker
-                          selected={selectedPost.date ? new Date(selectedPost.date) : null}
-                          onChange={(date: Date | null) => {
-                            if (date) {
-                              setSelectedPost({ 
-                                ...selectedPost, 
-                                date: date.toISOString().split('T')[0] 
-                              })
-                            }
-                          }}
-                          dateFormat="yyyy-MM-dd"
-                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
-                          showPopperArrow={false}
-                          fixedHeight
-                          showMonthDropdown
-                          showYearDropdown
-                          dropdownMode="select"
-                          calendarClassName="!bg-gray-50 dark:!bg-zinc-800 !border-gray-200 dark:!border-zinc-700 !rounded-lg !shadow-lg !font-sans"
-                          wrapperClassName="!w-full"
-                          popperClassName="!z-50"
-                          popperPlacement="bottom-start"
-                        />
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none">
-                          📅
+                      <div className="flex gap-4 mb-4">
+                        <div className="relative">
+                          <DatePicker
+                            selected={selectedPost.date ? new Date(selectedPost.date) : null}
+                            onChange={(date: Date | null) => {
+                              if (date) {
+                                setSelectedPost({ 
+                                  ...selectedPost, 
+                                  date: date.toISOString().split('T')[0] 
+                                })
+                              }
+                            }}
+                            dateFormat="yyyy-MM-dd"
+                            className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
+                            showPopperArrow={false}
+                            fixedHeight
+                            showMonthDropdown
+                            showYearDropdown
+                            dropdownMode="select"
+                            calendarClassName="!bg-gray-50 dark:!bg-zinc-800 !border-gray-200 dark:!border-zinc-700 !rounded-lg !shadow-lg !font-sans"
+                            wrapperClassName="!w-full"
+                            popperClassName="!z-50"
+                            popperPlacement="bottom-start"
+                          />
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none">
+                            📅
+                          </div>
                         </div>
+                        {renderCategoryCombobox(
+                          selectedPost.category,
+                          (category) => setSelectedPost({ ...selectedPost, category })
+                        )}
                       </div>
                       <div className="flex-1 min-h-0 w-full overflow-hidden">
                         {renderEditor(
@@ -517,32 +627,38 @@ export default function AdminPage() {
                         onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
-                      <div className="relative mb-4">
-                        <DatePicker
-                          selected={newPost.date ? new Date(newPost.date) : null}
-                          onChange={(date: Date | null) => {
-                            if (date) {
-                              setNewPost({ 
-                                ...newPost, 
-                                date: date.toISOString().split('T')[0] 
-                              })
-                            }
-                          }}
-                          dateFormat="yyyy-MM-dd"
-                          className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
-                          showPopperArrow={false}
-                          fixedHeight
-                          showMonthDropdown
-                          showYearDropdown
-                          dropdownMode="select"
-                          calendarClassName="!bg-gray-50 dark:!bg-zinc-800 !border-gray-200 dark:!border-zinc-700 !rounded-lg !shadow-lg !font-sans"
-                          wrapperClassName="!w-full"
-                          popperClassName="!z-50"
-                          popperPlacement="bottom-start"
-                        />
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none">
-                          📅
+                      <div className="flex gap-4 mb-4">
+                        <div className="relative">
+                          <DatePicker
+                            selected={newPost.date ? new Date(newPost.date) : null}
+                            onChange={(date: Date | null) => {
+                              if (date) {
+                                setNewPost({ 
+                                  ...newPost, 
+                                  date: date.toISOString().split('T')[0] 
+                                })
+                              }
+                            }}
+                            dateFormat="yyyy-MM-dd"
+                            className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
+                            showPopperArrow={false}
+                            fixedHeight
+                            showMonthDropdown
+                            showYearDropdown
+                            dropdownMode="select"
+                            calendarClassName="!bg-gray-50 dark:!bg-zinc-800 !border-gray-200 dark:!border-zinc-700 !rounded-lg !shadow-lg !font-sans"
+                            wrapperClassName="!w-full"
+                            popperClassName="!z-50"
+                            popperPlacement="bottom-start"
+                          />
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none">
+                            📅
+                          </div>
                         </div>
+                        {renderCategoryCombobox(
+                          newPost.category,
+                          (category) => setNewPost({ ...newPost, category })
+                        )}
                       </div>
                       <div className="flex-1 min-h-0 w-full overflow-hidden">
                         {renderEditor(
@@ -560,7 +676,12 @@ export default function AdminPage() {
                               message: 'Are you sure you want to discard this draft? This will clear all content.',
                               confirmLabel: 'Discard Draft',
                               onConfirm: () => {
-                                setNewPost({ title: '', content: '', date: new Date().toISOString().split('T')[0] })
+                                setNewPost({ 
+                                  title: '', 
+                                  content: '', 
+                                  date: new Date().toISOString().split('T')[0],
+                                  category: 'Uncategorized'
+                                })
                                 setDialog(prev => ({ ...prev, isOpen: false }))
                               },
                               isDestructive: true

@@ -6,19 +6,20 @@ export async function PUT(
   { params }: { params: { slug: string } }
 ) {
   try {
-    const { title, content, date } = await request.json()
+    const { title, content, date, category } = await request.json()
     const { slug } = params
 
-    // Create markdown content
+    // Create markdown content with frontmatter
     const markdown = `---
 title: '${title}'
 date: '${date}'
+category: '${category || 'Uncategorized'}'
 ---
 
 ${content}`
 
-    // Upload to Vercel Blob storage
-    const blob = await put(`posts/${slug}.md`, markdown, {
+    // Upload to Vercel Blob storage as MDX
+    const blob = await put(`posts/${slug}.mdx`, markdown, {
       access: 'public',
       addRandomSuffix: false,
       allowOverwrite: true
@@ -37,7 +38,7 @@ export async function DELETE(
 ) {
   try {
     const { slug } = params
-    await del(`posts/${slug}.md`)
+    await del(`posts/${slug}.mdx`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

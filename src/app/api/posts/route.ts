@@ -37,18 +37,19 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { title, content, date, slug } = await request.json()
+    const { title, content, date, slug, category } = await request.json()
 
-    // Create markdown content
+    // Create markdown content with frontmatter
     const markdown = `---
 title: '${title}'
 date: '${date}'
+category: '${category || 'Uncategorized'}'
 ---
 
 ${content}`
 
-    // Upload to Vercel Blob storage
-    const blob = await put(`posts/${slug}.md`, markdown, {
+    // Upload to Vercel Blob storage as MDX
+    const blob = await put(`posts/${slug}.mdx`, markdown, {
       access: 'public',
       addRandomSuffix: false,
       allowOverwrite: true
