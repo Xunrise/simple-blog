@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-
-const postsDirectory = path.join(process.cwd(), 'posts')
-
+import { put, del } from '@vercel/blob'
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: { slug: string } }
 ) {
   try {
     const { title, content, date } = await request.json()
-    const resolvedParams = await params
-    const filePath = path.join(postsDirectory, `${resolvedParams.slug}.md`)
+    const { slug } = params
 
     // Create markdown content
     const markdown = `---
@@ -22,10 +17,14 @@ date: '${date}'
 
 ${content}`
 
-    // Write to file
-    fs.writeFileSync(filePath, markdown)
+    // Upload to Vercel Blob storage
+    const blob = await put(`posts/${slug}.md`, markdown, {
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true
+    })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, blob })
   } catch (error) {
     console.error('Failed to update post:', error)
     return NextResponse.json({ error: 'Failed to update post' }, { status: 500 })
@@ -34,12 +33,11 @@ ${content}`
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: { slug: string } }
 ) {
   try {
-    const resolvedParams = await params
-    const filePath = path.join(postsDirectory, `${resolvedParams.slug}.md`)
-    fs.unlinkSync(filePath)
+    const { slug } = params
+    await del(`posts/${slug}.md`)
 
     return NextResponse.json({ success: true })
   } catch (error) {

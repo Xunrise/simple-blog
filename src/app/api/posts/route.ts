@@ -1,25 +1,29 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { list, put, del } from '@vercel/blob'
 import matter from 'gray-matter'
-
-const postsDirectory = path.join(process.cwd(), 'posts')
 
 export async function GET() {
   try {
-    const fileNames = fs.readdirSync(postsDirectory)
-    const posts = fileNames.map((fileName) => {
-      const fullPath = path.join(postsDirectory, fileName)
-      const fileContents = fs.readFileSync(fullPath, 'utf8')
-      const { data, content } = matter(fileContents)
+    // Get remote posts from Vercel Blob storage
+    const response = await list({ mode: 'folded', prefix: 'posts/' })
+    const posts = await Promise.all(
+      response.blobs
+        .filter(blob => blob.pathname.endsWith('.mdx') || blob.pathname.endsWith('.md'))
+        .map(async (blob) => {
+          const response = await fetch(blob.url)
+          const fileContents = await response.text()
+          const { data, content } = matter(fileContents)
+          const slug = blob.pathname.replace(/\.mdx?$/, '').replace('posts/', '')
 
-      return {
-        slug: fileName.replace(/\.md$/, ''),
-        title: data.title,
-        date: data.date,
-        content
-      }
-    })
+          return {
+            slug,
+            content,
+            title: data.title as string,
+            date: data.date as string,
+            category: (data.category as string) || 'Uncategorized'
+          }
+        })
+    )
 
     // Sort posts by date
     posts.sort((a, b) => (a.date < b.date ? 1 : -1))
@@ -43,11 +47,14 @@ date: '${date}'
 
 ${content}`
 
-    // Write to file
-    const filePath = path.join(postsDirectory, `${slug}.md`)
-    fs.writeFileSync(filePath, markdown)
+    // Upload to Vercel Blob storage
+    const blob = await put(`posts/${slug}.md`, markdown, {
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true
+    })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, blob })
   } catch (error) {
     console.error('Failed to create post:', error)
     return NextResponse.json({ error: 'Failed to create post' }, { status: 500 })
