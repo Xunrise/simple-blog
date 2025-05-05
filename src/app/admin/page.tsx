@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [editedPosts, setEditedPosts] = useState<Record<string, { title: string; content: string }>>({})
   const [deletingPosts, setDeletingPosts] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Get unique categories from posts
   const categories = ['Uncategorized', ...new Set(posts.map(post => post.category))]
@@ -139,6 +140,11 @@ export default function AdminPage() {
       }
     } else {
       setSelectedPost(null)
+    }
+    
+    // Close sidebar on mobile when a post is selected
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false)
     }
     
     setIsVisible(true) // Start fade in
@@ -350,6 +356,22 @@ export default function AdminPage() {
     })
   }
 
+  // Use a memoized mobile state at the component level instead of inside renderEditor
+  const [isMobileToolbar, setIsMobileToolbar] = useState(false);
+  
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobileToolbar(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
+
   const renderEditor = (content: string, setContent: (value: string) => void) => (
     <div className="flex flex-col h-full w-full space-y-1">
       <div className="flex flex-wrap gap-1 p-1 bg-gray-50 dark:bg-zinc-800 rounded-lg">
@@ -358,7 +380,7 @@ export default function AdminPage() {
             key={button.label}
             type="button"
             onClick={() => insertMarkdown(content, setContent, button.prefix, button.suffix, button.block)}
-            className="px-2 py-1 text-sm font-medium bg-white dark:bg-zinc-700 rounded hover:bg-gray-100 dark:hover:bg-zinc-600 transition-colors"
+            className={`${isMobileToolbar ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-sm'} font-medium bg-white dark:bg-zinc-700 rounded hover:bg-gray-100 dark:hover:bg-zinc-600 transition-colors`}
             title={button.label}
           >
             {button.icon}
@@ -402,7 +424,7 @@ export default function AdminPage() {
 
   const renderCategoryCombobox = (value: string, onChange: (value: string) => void) => (
     <Combobox value={value} onChange={onChange}>
-      <div className="relative">
+      <div className="relative flex-1 min-w-0">
         <div className="relative">
           <Combobox.Input
             className="w-full text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 pl-3 pr-10 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors"
@@ -490,21 +512,46 @@ export default function AdminPage() {
         </>
       )}
       
-      <div className="max-w-[1800px] mx-auto px-4 py-8 h-screen">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-[1800px] mx-auto px-2 sm:px-4 py-4 sm:py-8 h-screen overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-8">
           <h1 className="text-2xl font-bold">Blog Admin</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
             {renderAuthStatus()}
-            <Link href="/" className="text-blue-500 hover:text-blue-600">
+            <Link href="/" className="text-blue-500 hover:text-blue-600 mr-2">
               View Blog
             </Link>
+            {/* Mobile sidebar toggle button */}
+            <button 
+              type="button" 
+              className="md:hidden p-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Toggle sidebar"
+            >
+              {sidebarOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
-          {/* Main content area - 8 columns */}
-          <div className="col-span-8 h-full w-full">
-            <article className={`w-full h-full bg-white dark:bg-zinc-900 rounded-xl shadow-md hover:shadow-lg will-change-transform will-change-opacity ${
+        <div className="relative flex h-[calc(100vh-6rem)]">
+          {/* Mobile sidebar overlay */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Main content area - full width on mobile, flex layout on desktop */}
+          <div className="flex-1 h-full w-full overflow-hidden">
+            <article className={`w-full h-full bg-white dark:bg-zinc-900 rounded-lg sm:rounded-xl shadow-md hover:shadow-lg will-change-transform will-change-opacity ${
               isDeleting && selectedPost && deletingPosts.includes(selectedPost.slug) 
                 ? 'translate-y-4 scale-95 opacity-0' 
                 : 'translate-y-0 scale-100 opacity-100'
@@ -512,19 +559,19 @@ export default function AdminPage() {
               <div className={`w-full h-full transition-opacity duration-150 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'} overflow-hidden`}>
                 {selectedPost ? (
                   <form onSubmit={handleUpdatePost} className="h-full w-full overflow-hidden">
-                    <div className="w-full h-full flex flex-col p-8 overflow-hidden">
+                    <div className="w-full h-full flex flex-col p-3 sm:p-8 overflow-hidden">
                       <input
                         type="text"
                         value={selectedPost.title}
                         onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
-                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
+                        className="w-full mb-2 sm:mb-4 text-xl sm:text-2xl font-bold bg-transparent border-0 p-1 sm:p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
                         placeholder="Post Title"
                         onFocus={(e) => e.target.placeholder = ''}
                         onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
-                      <div className="flex gap-4 mb-4">
-                        <div className="relative">
+                      <div className="flex gap-2 sm:gap-4 mb-2 sm:mb-4 w-full">
+                        <div className="relative flex-1 min-w-0">
                           <DatePicker
                             selected={selectedPost.date ? new Date(selectedPost.date) : null}
                             onChange={(date: Date | null) => {
@@ -536,7 +583,7 @@ export default function AdminPage() {
                               }
                             }}
                             dateFormat="yyyy-MM-dd"
-                            className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
+                            className="pl-9 text-sm sm:text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-full"
                             showPopperArrow={false}
                             fixedHeight
                             showMonthDropdown
@@ -562,7 +609,7 @@ export default function AdminPage() {
                           (value) => setSelectedPost({ ...selectedPost, content: value })
                         )}
                       </div>
-                      <div className="flex justify-between mt-8 border-t pt-4 dark:border-zinc-800">
+                      <div className="flex justify-between mt-4 sm:mt-8 border-t pt-2 sm:pt-4 dark:border-zinc-800">
                         <button
                           type="button"
                           onClick={() => handleDeletePost(selectedPost.slug)}
@@ -616,19 +663,19 @@ export default function AdminPage() {
                   </form>
                 ) : (
                   <form onSubmit={handleCreatePost} className="h-full w-full overflow-hidden">
-                    <div className="w-full h-full flex flex-col p-8 overflow-hidden">
+                    <div className="w-full h-full flex flex-col p-3 sm:p-8 overflow-hidden">
                       <input
                         type="text"
                         value={newPost.title}
                         onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                        className="w-full mb-4 text-2xl font-bold bg-transparent border-0 p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
+                        className="w-full mb-2 sm:mb-4 text-xl sm:text-2xl font-bold bg-transparent border-0 p-1 sm:p-2 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-lg dark:text-gray-100"
                         placeholder="Post Title"
                         onFocus={(e) => e.target.placeholder = ''}
                         onBlur={(e) => e.target.placeholder = 'Post Title'}
                         required
                       />
-                      <div className="flex gap-4 mb-4">
-                        <div className="relative">
+                      <div className="flex gap-2 sm:gap-4 mb-2 sm:mb-4 w-full">
+                        <div className="relative flex-1 min-w-0">
                           <DatePicker
                             selected={newPost.date ? new Date(newPost.date) : null}
                             onChange={(date: Date | null) => {
@@ -640,7 +687,7 @@ export default function AdminPage() {
                               }
                             }}
                             dateFormat="yyyy-MM-dd"
-                            className="pl-9 text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-40"
+                            className="pl-9 text-sm sm:text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors w-full"
                             showPopperArrow={false}
                             fixedHeight
                             showMonthDropdown
@@ -666,7 +713,7 @@ export default function AdminPage() {
                           (value) => setNewPost({ ...newPost, content: value })
                         )}
                       </div>
-                      <div className="flex justify-between mt-8 border-t pt-4 dark:border-zinc-800">
+                      <div className="flex justify-between mt-4 sm:mt-8 border-t pt-2 sm:pt-4 dark:border-zinc-800">
                         <button
                           type="button"
                           onClick={() => {
@@ -705,9 +752,21 @@ export default function AdminPage() {
             </article>
           </div>
 
-          {/* Sidebar - 3 columns */}
-          <aside className="col-span-3">
-            <div className="sticky top-8 space-y-1 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-gray-100 dark:border-zinc-800">
+          {/* Sidebar - slide out on mobile, fixed on desktop */}
+          <aside className={`fixed md:relative inset-y-0 right-0 z-50 md:z-0 w-64 md:w-72 transform ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out md:ml-0 md:mr-0 h-full md:h-auto`}>
+            <div className="h-full md:sticky md:top-8 space-y-1 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm shadow-lg md:rounded-xl p-4 border border-gray-100 dark:border-zinc-800 overflow-y-auto flex flex-col">
+              <div className="flex items-center justify-between mb-4 md:hidden pt-2">
+                <h2 className="text-lg font-bold">Posts</h2>
+                <button 
+                  type="button" 
+                  className="p-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               <nav className="space-y-1">
                 <div className="group">
                   <div className={`flex items-center justify-between rounded-lg hover:bg-gray-100/50 dark:hover:bg-zinc-800/30 transition-all duration-200 ${
