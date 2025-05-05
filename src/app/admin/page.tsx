@@ -53,8 +53,8 @@ export default function AdminPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Get unique categories from posts
-  const categories = ['Uncategorized', ...new Set(posts.map(post => post.category))]
+  // Get unique categories from posts - ensure no duplicates
+  const categories = [...new Set(['Uncategorized', ...posts.map(post => post.category)])]
 
   // Filter categories based on query
   const filteredCategories = categoryQuery === ''
@@ -422,61 +422,150 @@ export default function AdminPage() {
     )
   }
 
-  const renderCategoryCombobox = (value: string, onChange: (value: string) => void) => (
-    <Combobox value={value} onChange={onChange}>
-      <div className="relative flex-1 min-w-0">
-        <div className="relative">
-          <Combobox.Input
-            className="w-full text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 pl-3 pr-10 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:border-transparent transition-colors"
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCategoryQuery(event.target.value)}
-            displayValue={(category: string) => category}
-            placeholder="Category"
-          />
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-              />
-            </svg>
-          </Combobox.Button>
+  // State for category selection and management
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Handle clicks outside the category dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategorySelector(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const renderCategorySelector = (value: string, onChange: (value: string) => void) => {
+    return (
+      <div className="relative flex-1 min-w-0" ref={categoryDropdownRef}>
+        {/* Current category display with dropdown toggle */}
+        <div 
+          className="flex items-center w-full text-base bg-transparent border border-gray-200 dark:border-zinc-700 rounded-lg p-2 text-gray-600 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 dark:focus-within:ring-blue-400 focus-within:ring-offset-2 focus-within:border-transparent transition-colors cursor-pointer"
+          onClick={() => {
+            setShowCategorySelector(!showCategorySelector);
+            setNewCategoryInput('');
+            // Focus the input field when opening on mobile
+            setTimeout(() => {
+              if (categoryInputRef.current) {
+                categoryInputRef.current.focus();
+              }
+            }, 50);
+          }}
+        >
+          <span className="flex-grow truncate">{value || 'Uncategorized'}</span>
+          <svg
+            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${showCategorySelector ? 'rotate-180' : ''}`}
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
         </div>
-        <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-zinc-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          {filteredCategories.length === 0 ? (
-            <div className="relative cursor-default select-none py-2 px-4 text-gray-700 dark:text-gray-300">
-              No categories found.
+
+        {/* Dropdown for category selection */}
+        {showCategorySelector && (
+          <div className="absolute z-50 mt-1 w-full bg-white dark:bg-zinc-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden">
+            {/* Search/create new category input */}
+            <div className="p-2 border-b border-gray-200 dark:border-zinc-700">
+              <input
+                ref={categoryInputRef}
+                type="text"
+                className="w-full p-2 text-sm bg-gray-50 dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                placeholder="Search or create category..."
+                value={newCategoryInput}
+                onChange={(e) => setNewCategoryInput(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newCategoryInput.trim()) {
+                      onChange(newCategoryInput.trim());
+                      setShowCategorySelector(false);
+                      // Focus the editor after selection
+                      const textarea = document.querySelector('textarea');
+                      if (textarea) {
+                        textarea.focus();
+                      }
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowCategorySelector(false);
+                  }
+                }}
+              />
             </div>
-          ) : (
-            filteredCategories.map((category) => (
-              <Combobox.Option
-                key={category}
-                className={({ active }: { active: boolean }) =>
-                  `relative cursor-default select-none py-2 px-4 ${
-                    active ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'
-                  }`
-                }
-                value={category}
+
+            {/* List of existing categories */}
+            <div className="max-h-60 overflow-y-auto py-1">
+              {/* Always show Uncategorized option */}
+              <div
+                className={`py-2 px-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${value === 'Uncategorized' ? 'bg-blue-100 dark:bg-blue-900/30 font-medium' : ''}`}
+                onClick={() => {
+                  onChange('Uncategorized');
+                  setShowCategorySelector(false);
+                }}
               >
-                {({ selected, active }: { selected: boolean; active: boolean }) => (
-                  <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                Uncategorized
+              </div>
+
+              {/* Filtered categories based on input */}
+              {categories
+                .filter(category => 
+                  // Don't show Uncategorized again since it's already shown above
+                  category !== 'Uncategorized' && 
+                  // Only filter by input if there's something typed
+                  (newCategoryInput === '' || category.toLowerCase().includes(newCategoryInput.toLowerCase()))
+                )
+                .map(category => (
+                  <div
+                    key={category}
+                    className={`py-2 px-4 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${value === category ? 'bg-blue-100 dark:bg-blue-900/30 font-medium' : ''}`}
+                    onClick={() => {
+                      onChange(category);
+                      setShowCategorySelector(false);
+                    }}
+                  >
                     {category}
-                  </span>
-                )}
-              </Combobox.Option>
-            ))
-          )}
-        </Combobox.Options>
+                  </div>
+                ))}
+
+              {/* Show option to create new category if input doesn't match existing ones */}
+              {newCategoryInput.trim() !== '' && 
+               !categories.some(c => c.toLowerCase() === newCategoryInput.toLowerCase()) && (
+                <div
+                  className="py-2 px-4 cursor-pointer text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium"
+                  onClick={() => {
+                    onChange(newCategoryInput.trim());
+                    setShowCategorySelector(false);
+                    // Focus the editor after selection
+                    const textarea = document.querySelector('textarea');
+                    if (textarea) {
+                      textarea.focus();
+                    }
+                  }}
+                >
+                  Create "{newCategoryInput.trim()}"
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-    </Combobox>
-  )
+    );
+  }
 
   if (isLoading) return (
     <div className="min-h-screen relative bg-gradient-to-b from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
@@ -598,9 +687,9 @@ export default function AdminPage() {
                             📅
                           </div>
                         </div>
-                        {renderCategoryCombobox(
+                        {renderCategorySelector(
                           selectedPost.category,
-                          (category) => setSelectedPost({ ...selectedPost, category })
+                          (category: string) => setSelectedPost({ ...selectedPost, category })
                         )}
                       </div>
                       <div className="flex-1 min-h-0 w-full overflow-hidden">
@@ -702,9 +791,9 @@ export default function AdminPage() {
                             📅
                           </div>
                         </div>
-                        {renderCategoryCombobox(
+                        {renderCategorySelector(
                           newPost.category,
-                          (category) => setNewPost({ ...newPost, category })
+                          (category: string) => setNewPost({ ...newPost, category })
                         )}
                       </div>
                       <div className="flex-1 min-h-0 w-full overflow-hidden">
