@@ -15,14 +15,23 @@ function generateExcerpt(content: string, maxLength = 200) {
 }
 
 
-export const getAllPosts = cache(async function getAllPosts(): Promise<Post[]> {
+export async function getAllPosts(): Promise<Post[]> {
   // Get remote posts from Vercel Blob storage
+  // Use a cache-busting query parameter with current timestamp to avoid browser/CDN caching
+  const cacheBuster = new Date().getTime()
   const response = await list({mode: 'folded', prefix: 'posts/'})
   const remotePosts = await Promise.all(
     response.blobs
       .filter(blob => blob.pathname.endsWith('.mdx') || blob.pathname.endsWith('.md'))
       .map(async (blob) => {
-        const response = await fetch(blob.url)
+        // Add cache-busting parameter to ensure we get the latest content
+        const response = await fetch(`${blob.url}?_=${cacheBuster}`, { 
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
         const fileContents = await response.text()
         const { data: metadata, content } = matter(fileContents)
         const slug = blob.pathname.replace(/\.mdx$/, '').replace('posts/', '')
@@ -40,4 +49,4 @@ export const getAllPosts = cache(async function getAllPosts(): Promise<Post[]> {
 
   // Combine and sort all posts
   return remotePosts.sort((a, b) => (a.date < b.date ? 1 : -1))
-});
+};
