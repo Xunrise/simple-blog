@@ -409,12 +409,12 @@ export default function AdminPage() {
             className="w-8 h-8 rounded-full" 
           />
         )}
-        <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
+        <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline pl-1">
           {session?.user?.name || session?.user?.email}
         </span>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
-          className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+          className="text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 pl-2"
         >
           Sign Out
         </button>
@@ -602,9 +602,8 @@ export default function AdminPage() {
       )}
       
       <div className="max-w-[1800px] mx-auto px-2 sm:px-4 py-4 sm:py-8 h-screen overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4 sm:mb-8">
-          <h1 className="text-2xl font-bold">Blog Admin</h1>
-          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
+        <div className="flex flex-row justify-end items-center gap-2 mb-4 sm:mb-8">
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
             {renderAuthStatus()}
             <Link href="/" className="text-blue-500 hover:text-blue-600 mr-2">
               View Blog

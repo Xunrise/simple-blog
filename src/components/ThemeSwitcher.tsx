@@ -24,7 +24,7 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50 flex flex-col items-end space-y-2">
+    <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50 flex flex-col items-end space-y-2 hidden sm:flex">
       {/* Admin view button (only shown on non-admin pages in desktop view) */}
       {!isAdminPage && (
         <Link 
