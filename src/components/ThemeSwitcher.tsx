@@ -2,10 +2,17 @@
 
 import { useTheme } from './ThemeProvider';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const pathname = usePathname();
+  
+  // Check if we're on the admin page
+  const isAdminPage = pathname?.startsWith('/admin');
 
   // Avoid hydration mismatch by rendering only on client-side
   useEffect(() => {
@@ -17,49 +24,83 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="lg:fixed top-4 left-4 z-50 bg-white dark:bg-zinc-900 rounded-lg shadow-md p-2 border border-gray-200 dark:border-zinc-800 transition-all">
-      <div className="flex items-center space-x-1">
-        {/* Light theme button */}
-        <button
-          onClick={() => setTheme('light')}
-          className={`p-2 rounded-lg transition-colors ${
-            theme === 'light' 
-              ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-          }`}
-          title="Light mode"
-          aria-label="Use light theme"
+    <div className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50 flex flex-col items-end space-y-2">
+      {/* Admin view button (only shown on non-admin pages in desktop view) */}
+      {!isAdminPage && (
+        <Link 
+          href="/admin" 
+          className="hidden md:flex items-center bg-white dark:bg-zinc-900 rounded-lg shadow-md px-3 py-2 border border-gray-200 dark:border-zinc-800 transition-all hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-700 dark:text-gray-300"
         >
-          <SunIcon className="h-5 w-5" />
-        </button>
-        
-        {/* Dark theme button */}
-        <button
-          onClick={() => setTheme('dark')}
-          className={`p-2 rounded-lg transition-colors ${
-            theme === 'dark' 
-              ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-          }`}
-          title="Dark mode"
-          aria-label="Use dark theme"
-        >
-          <MoonIcon className="h-5 w-5" />
-        </button>
-        
-        {/* System theme button */}
-        <button
-          onClick={() => setTheme('system')}
-          className={`p-2 rounded-lg transition-colors ${
-            theme === 'system' 
-              ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-          }`}
-          title="System preference"
-          aria-label="Use system theme"
-        >
-          <ComputerIcon className="h-5 w-5" />
-        </button>
+          <AdminIcon className="h-4 w-4 mr-2" />
+          <span className="text-sm font-medium">Admin view</span>
+        </Link>
+      )}
+      
+      {/* Theme switcher */}
+      <div 
+        className="bg-white dark:bg-zinc-900 rounded-lg shadow-md border border-gray-200 dark:border-zinc-800 transition-all overflow-hidden"
+        onMouseEnter={() => setIsExpanded(true)}
+        onMouseLeave={() => setIsExpanded(false)}
+      >
+        {isExpanded ? (
+          <div className="flex items-center p-1">
+            {/* Light theme button */}
+            <button
+              onClick={() => setTheme('light')}
+              className={`p-2 rounded-lg transition-colors ${
+                theme === 'light' 
+                  ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+              }`}
+              title="Light mode"
+              aria-label="Use light theme"
+            >
+              <SunIcon className="h-5 w-5" />
+            </button>
+            
+            {/* Dark theme button */}
+            <button
+              onClick={() => setTheme('dark')}
+              className={`p-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+              }`}
+              title="Dark mode"
+              aria-label="Use dark theme"
+            >
+              <MoonIcon className="h-5 w-5" />
+            </button>
+            
+            {/* System theme button */}
+            <button
+              onClick={() => setTheme('system')}
+              className={`p-2 rounded-lg transition-colors ${
+                theme === 'system' 
+                  ? 'bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+              }`}
+              title="System preference"
+              aria-label="Use system theme"
+            >
+              <ComputerIcon className="h-5 w-5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            title="Theme options"
+          >
+            {theme === 'dark' ? (
+              <MoonIcon className="h-5 w-5" />
+            ) : theme === 'light' ? (
+              <SunIcon className="h-5 w-5" />
+            ) : (
+              <ComputerIcon className="h-5 w-5" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -109,4 +150,19 @@ function ComputerIcon({ className = "h-6 w-6" }) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" />
     </svg>
   );
-} 
+}
+
+function AdminIcon({ className = "h-6 w-6" }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      strokeWidth="1.5" 
+      stroke="currentColor" 
+      className={className}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+    </svg>
+  );
+}
